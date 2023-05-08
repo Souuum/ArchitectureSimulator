@@ -1,3 +1,6 @@
+import re
+
+
 class Register:
     def __init__(self):
         self.value = 0
@@ -45,6 +48,29 @@ class ALU:
         self.memory = memory
         self.stack = stack
         self.program_counter = program_counter
+        self.operations = {'LDA': self.lda,
+                           'STR': self.str,
+                           'PUSH': self.push,
+                           'POP': self.pop,
+                           'AND': self.and_,
+                           'OR': self.or_,
+                           'NOT': self.not_,
+                           'ADD': self.add,
+                           'SUB': self.sub,
+                           'DIV': self.div,
+                           'MUL': self.mul,
+                           'MOD': self.mod,
+                           'INC': self.inc,
+                           'DEC': self.dec,
+                           'BEQ': self.beq,
+                           'BNE': self.bne,
+                           'BBG': self.bbg,
+                           'BSM': self.bsm,
+                           'JMP': self.jmp,
+                           'HLT': self.hlt,
+                           'SRR': self.srr,
+                           'SRL': self.srl,
+                           }
 
     # Part 1
 
@@ -52,94 +78,144 @@ class ALU:
     # Load register reg1 with the contents of either the contents of reg2, or the memory var or a constant const.
     #  Memory regions loads (load into a variable, for instance) are NOT ALLOWED.
 
-    def lda(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.memory.read(var)
-            else:
-                self.registers[reg1].value = const
-        else:
+    def lda(self, reg1, reg2):
+
+        # check if reg1 and reg2 are registers (T0ˆ9)
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', str(reg2)):
+            reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg2].value
+
+        # if reg2 is a variable => number as string
+        elif re.match(r'\d+', str(reg2)):
+            self.registers[reg1].value = self.memory.read(int(reg2))
+        # if reg2 is a constant
+        else:
+            self.registers[reg1].value = int(reg2)
 
     # 2. 2. STR <var> <reg>/<const>
     # Store in the memory position referred by var the value of register reg or a constant const.
     # Register stores (store into register t0, for instance) are NOT ALLOWED.
 
-    def str(self, var, reg, const):
-        if reg == None:
-            self.memory.write(var, const)
-        else:
+    def str(self, var, reg):
+
+        var = int(var)
+        # if reg is a register
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
             self.memory.write(var, self.registers[reg].value)
+        # if reg is a constant
+        else:
+            self.memory.write(var, int(reg))
 
     # 3. PUSH <reg>/<var>/<const>
     # Push to the top of the stack the contents of reg or var or a constant const
 
-    def push(self, reg, var, const):
-        if reg == None:
-            if var != None:
-                self.stack.push(self.memory.read(var))
-            else:
-                self.stack.push(const)
-        else:
+    def push(self, reg):
+
+        # if reg is a register
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
             self.stack.push(self.registers[reg].value)
+        # if reg is a variable
+        elif re.match(r'\d+', reg):
+            self.stack.push(self.memory.read(int(reg)))
+        # if reg is a constant
+        else:
+            self.stack.push(reg)
 
     # 4. POP <reg>
     # Pop from the top of the stack and store the value on reg. Storing in a memory region is NOT ALLOWED.
     def pop(self, reg):
-        self.registers[reg].value = self.stack.pop()
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
+            self.registers[reg].value = self.stack.pop()
 
     # 5. AND <reg1> <reg2>/<var>/<const>
     # Performs a logical AND operation between reg1 and a register reg2,
     # a variable var or a constant const, and store the result on register reg1.
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
-    def and_(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.registers[reg1].value & self.memory.read(
-                    var)
-            else:
-                self.registers[reg1].value = self.registers[reg1].value & const
-        else:
+    def and_(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg1].value & self.registers[reg2].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.registers[reg1].value & self.memory.read(
+                int(reg2))
+
+        # if reg2 is a constant
+        else:
+            self.registers[reg1].value = self.registers[reg1].value & self.memory.read(
+                reg2)
 
     # 6. OR <reg1> <reg2>/<var>/<const>
     # Performs a logical OR operation between reg1 and a register reg2,
     # a variable var or a constant const, and store the result on register reg1.
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
-    def or_(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.registers[reg1].value | self.memory.read(
-                    var)
-            else:
-                self.registers[reg1].value = self.registers[reg1].value | const
-        else:
+    def or_(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg1].value | self.registers[reg2].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.registers[reg1].value | self.memory.read(
+                reg2)
+
+        # if reg2 is a constant
+        else:
+            self.registers[reg1].value = self.registers[reg1].value | int(reg2)
 
     # 7. NOT <reg>
     # Performs a logical NOT operation on register reg and store the result on register reg.
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
     def not_(self, reg):
-        self.registers[reg].value = ~self.registers[reg].value
+
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
+            self.registers[reg].value = ~self.registers[reg].value
 
     # 8. ADD <reg1> <reg2>/<var>/<const>
     # Performs the addition operation of reg1 and a register reg2, a variable var or a constant const,
     # and store the result on register reg1. Memory regions stores (store result into a variable, for
     # instance) are NOT ALLOWED.
 
-    def add(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.registers[reg1].value + self.memory.read(
-                    var)
-            else:
-                self.registers[reg1].value = self.registers[reg1].value + const
-        else:
+    def add(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg1].value + \
                 self.registers[reg2].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.registers[reg1].value + \
+                self.memory.read(reg2)
+        # if reg2 is a constant
+        else:
+            self.registers[reg1].value = self.registers[reg1].value + int(reg2)
 
     # 9. SUB <reg1> <reg2>/<var>/<const>
     # Performs the subtraction operation of reg1 and a register reg2,
@@ -147,15 +223,25 @@ class ALU:
     # The operation is given by second argument minus the first argument (i.e., reg2 – reg1).
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
-    def sub(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.memory.read(
-                    var) - self.registers[reg1].value
-            else:
-                self.registers[reg1].value = const - self.registers[reg1].value
-        else:
+    def sub(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg2].value - \
+                self.registers[reg1].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.memory.read(reg2) - \
+                self.registers[reg1].value
+
+        # if reg2 is a constant
+        else:
+            self.registers[reg1].value = int(reg2) - \
                 self.registers[reg1].value
 
     # 10. DIV <reg1> <reg2>/<var>/<const>
@@ -164,31 +250,52 @@ class ALU:
     # The operation is given by second argument divided by the first argument (i.e., reg2 / reg1).
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
-    def div(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.memory.read(
-                    var) // self.registers[reg1].value
-            else:
-                self.registers[reg1].value = const // self.registers[reg1].value
+    def div(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
+            self.registers[reg1].value = self.registers[reg2].value / \
+                self.registers[reg1].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.memory.read(reg2) / \
+                self.registers[reg1].value
+
+        # if reg2 is a constant
         else:
-            self.registers[reg1].value = self.registers[reg2].value // self.registers[reg1].value
+            self.registers[reg1].value = int(reg2) / \
+                self.registers[reg1].value
 
     # 11. MUL <reg1> <reg2>/<var>/<const>
     # Performs the multiplication operation of reg1 and a register reg2,
     # a variable var or a constant const, and store the result on register reg1.
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
-    def mul(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.registers[reg1].value * self.memory.read(
-                    var)
-            else:
-                self.registers[reg1].value = self.registers[reg1].value * const
+    def mul(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
+            self.registers[reg1].value = self.registers[reg2].value * \
+                self.registers[reg1].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.memory.read(reg2) * \
+                self.registers[reg1].value
+
+        # if reg2 is a constant
         else:
-            self.registers[reg1].value = self.registers[reg1].value * \
-                self.registers[reg2].value
+            self.registers[reg1].value = int(reg2) * \
+                self.registers[reg1].value
 
     # 12. MOD <reg1> <reg2>/<var>/<const>
     # Performs the integer modulo operation of reg1 and a register reg2,
@@ -196,21 +303,35 @@ class ALU:
     # The operation is given by second argument modulo the first argument (i.e., reg2 mod reg1).
     # Memory regions stores (store result into a variable, for instance) are NOT ALLOWED.
 
-    def mod(self, reg1, reg2, var, const):
-        if reg2 == None:
-            if var != None:
-                self.registers[reg1].value = self.memory.read(
-                    var) % self.registers[reg1].value
-            else:
-                self.registers[reg1].value = const % self.registers[reg1].value
+    def mod(self, reg1, reg2):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
+
+        # if reg2 is a register
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
+            self.registers[reg1].value = self.registers[reg2].value % \
+                self.registers[reg1].value
+
+        # if reg2 is a variable
+        elif re.match(r'\d+', reg2):
+            self.registers[reg1].value = self.memory.read(reg2) % \
+                self.registers[reg1].value
+
+        # if reg2 is a constant
         else:
-            self.registers[reg1].value = self.registers[reg2].value % self.registers[reg1].value
+            self.registers[reg1].value = int(reg2) % \
+                self.registers[reg1].value
 
     # 13. INC <reg>
     # Increments the value of register reg.
     # Memory increments (incrementing a variable, for instance) are NOT ALLOWED.
 
     def inc(self, reg):
+
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
         self.registers[reg].value += 1
 
     # 14. DEC <reg>
@@ -218,28 +339,35 @@ class ALU:
     # Memory increments (decrementing a variable, for instance) are NOT ALLOWED.
 
     def dec(self, reg):
+
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
         self.registers[reg].value -= 1
 
     # 15. BEQ <reg1>/<var1>/<const1> <reg2>/<var2>/<const2> <LABEL>
     # Performs a comparison between two values, given by registers, variables or constants.
     # Any combination is permitted. If they are equal, jump to the address defined by the label LABEL
 
-    def beq(self, reg1, var1, const1, reg2, var2, const2, label):
-        if reg1 == None:
-            if var1 != None:
-                val1 = self.memory.read(var1)
-            else:
-                val1 = const1
-        else:
+    def beq(self, reg1, reg2, label):
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        if reg2 == None:
-            if var2 != None:
-                val2 = self.memory.read(var2)
-            else:
-                val2 = const2
+        elif re.match(r'\d+', reg1):
+            val1 = self.memory.read(reg1)
+
         else:
+            val1 = int(reg1)
+
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
+
+        elif re.match(r'\d+', reg2):
+            val2 = self.memory.read(reg2)
+
+        else:
+            val2 = int(reg2)
 
         if val1 == val2:
             self.program_counter.value = label
@@ -248,22 +376,27 @@ class ALU:
     # Performs a comparison between two values, given by registers, variables or constants.
     # Any combination is permitted. If they are different, jump to the address defined by the label LABEL
 
-    def bne(self, reg1, var1, const1, reg2, var2, const2, label):
-        if reg1 == None:
-            if var1 != None:
-                val1 = self.memory.read(var1)
-            else:
-                val1 = const1
-        else:
+    def bne(self, reg1, reg2, label):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        if reg2 == None:
-            if var2 != None:
-                val2 = self.memory.read(var2)
-            else:
-                val2 = const2
+        elif re.match(r'\d+', reg1):
+            val1 = self.memory.read(reg1)
+
         else:
+            val1 = int(reg1)
+
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
+
+        elif re.match(r'\d+', reg2):
+            val2 = self.memory.read(reg2)
+
+        else:
+            val2 = int(reg2)
 
         if val1 != val2:
             self.program_counter.value = label
@@ -273,22 +406,27 @@ class ALU:
     # Any combination is permitted. If the first parameter is bigger than the second parameter,
     # jump to the address defined by the label LABEL
 
-    def bbg(self, reg1, var1, const1, reg2, var2, const2, label):
-        if reg1 == None:
-            if var1 != None:
-                val1 = self.memory.read(var1)
-            else:
-                val1 = const1
-        else:
+    def bbg(self, reg1, reg2, label):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        if reg2 == None:
-            if var2 != None:
-                val2 = self.memory.read(var2)
-            else:
-                val2 = const2
+        elif re.match(r'\d+', reg1):
+            val1 = self.memory.read(reg1)
+
         else:
+            val1 = int(reg1)
+
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
+
+        elif re.match(r'\d+', reg2):
+            val2 = self.memory.read(reg2)
+
+        else:
+            val2 = int(reg2)
 
         if val1 > val2:
             self.program_counter.value = label
@@ -298,22 +436,27 @@ class ALU:
     # Any combination is permitted. If the first parameter is smaller than the second parameter,
     #  jump to the address defined by the label LABEL
 
-    def bsm(self, reg1, var1, const1, reg2, var2, const2, label):
-        if reg1 == None:
-            if var1 != None:
-                val1 = self.memory.read(var1)
-            else:
-                val1 = const1
-        else:
+    def bsm(self, reg1, reg2, label):
+
+        if re.match(r'T\d+', reg1):
+            reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        if reg2 == None:
-            if var2 != None:
-                val2 = self.memory.read(var2)
-            else:
-                val2 = const2
+        elif re.match(r'\d+', reg1):
+            val1 = self.memory.read(reg1)
+
         else:
+            val1 = int(reg1)
+
+        if re.match(r'T\d+', reg2):
+            reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
+
+        elif re.match(r'\d+', reg2):
+            val2 = self.memory.read(reg2)
+
+        else:
+            val2 = int(reg2)
 
         if val1 < val2:
             self.program_counter.value = label
@@ -337,14 +480,20 @@ class ALU:
     #  by the constant const. For instance, the value 0001 left shifted 1 time becomes 0010.
 
     def srl(self, reg, const):
-        self.registers[reg].value = self.registers[reg].value >> const
+
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
+            self.registers[reg].value = self.registers[reg].value >> int(const)
 
     # b. SRR <reg> <const>
     # This operation takes the value in reg and performs a logical shift right of the number of bits defined
     # by the constant const. For instance, the value 1000 right shifted 1 time becomes 0100.
 
     def srr(self, reg, const):
-        self.registers[reg].value = self.registers[reg].value << const
+
+        if re.match(r'T\d+', reg):
+            reg = int(reg[1:])
+            self.registers[reg].value = self.registers[reg].value << int(const)
 
 
 class Simulator:
@@ -357,18 +506,92 @@ class Simulator:
                        self.stack, self.program_counter)
 
     def load_program(self, filename):
-        # Load the assembly program from the file
-        return
+        with open(filename, "r") as file:
+            lines = file.readlines()
 
-    def execute_program(self):
-        # Execute the loaded program step by step
-        return
+        state = "start"
+        program = []
+        memory = {}
+
+        i = 0
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith("!"):
+                continue
+
+            if line.startswith("#DATA"):
+                state = "data"
+                continue
+
+            if line.startswith("#CODE"):
+                state = "code"
+                continue
+
+            if state == "data":
+                variable, value = re.split(r'\s+', line)
+                memory[variable] = {'value': int(value), 'indice': i}
+                i += 1
+            elif state == "code":
+                program.append(line)
+
+        print(program)
+        print(memory)
+
+        # Initialize memory with the loaded variable values
+        for var, value in memory.items():
+            print(value)
+            self.memory.write(value['indice'], value['value'])
+
+        print("program loaded")
+
+        return program, memory
+
+    def execute_program(self, filename):
+        program, memory = self.load_program(filename)
+        self.program_counter.pc = 0
+
+        while self.program_counter.pc < len(program):
+            instruction = program[self.program_counter.pc]
+            tokens = re.split(r'\s+', instruction)
+
+            operation = tokens[0]
+
+            for i in range(1, len(tokens)):
+                # check if a token is a register
+
+                if re.match(r'T\d+', tokens[i]):
+                    print("found token")
+                # else if a token is a variable (start with a letter)
+                elif re.match(r'[a-zA-Z]+', tokens[i]):
+                    tokens[i] = str(memory[tokens[i]]['indice'])
+                # else if a token is a constant (start with a number)
+                else:
+                    tokens[i] = int(tokens[i])
+
+            print(tokens[1:])
+
+            # look if operations are in the list of operations in ALU and execute the corresponding function
+            if operation in self.alu.operations.keys():
+                self.alu.operations[operation](
+                    *tokens[1:])
+            else:
+                print("Error: Operation not found")
+
+            print('register')
+            for r in self.registers:
+                print(r.value)
+
+            print('memory')
+            for i in range(0, 3):
+                print(self.memory.read(i))
+
+            # Handle instructions ...
+            self.program_counter.next()
 
 
 def main():
     simulator = Simulator()
-    simulator.load_program("assembly_program.txt")
-    simulator.execute_program()
+    simulator.execute_program("test.asm")
 
 
 if __name__ == "__main__":
