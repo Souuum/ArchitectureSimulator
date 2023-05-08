@@ -37,8 +37,10 @@ class Stack:
 
     def pop(self):
         self.sp -= 1
-        self.stack.pop(self.sp)
-        return self.stack[self.sp]
+        s = self.stack.pop(self.sp)
+        print('pop')
+        print(s)
+        return s
 
 
 class ProgramCounter:
@@ -624,7 +626,9 @@ def main():
     program, memory, previous_states = [], [], []
 
     instructions_frame = ttk.LabelFrame(root, text="Instructions")
+    instructions_label = ttk.Label(root, text="next state : None")
     instructions_frame.grid(row=0, column=0, padx=10, pady=10)
+    instructions_label.grid(row=2, column=0, padx=10, pady=10)
 
     memory_frame = ttk.LabelFrame(root, text="Memory")
     memory_frame.grid(row=1, column=0, padx=10, pady=10)
@@ -706,6 +710,10 @@ def main():
         # update program counter label
         count.config(text="step " + str(simulator.program_counter.pc))
 
+        # update instruction step
+        instructions_label.config(
+            text="next state : " + program[simulator.program_counter.pc] if simulator.program_counter.pc < len(program) else "Program terminated")
+
         pass
 
     def on_reverse_step_click():
@@ -754,6 +762,10 @@ def main():
         # update program counter label
         count.config(text="step " + str(simulator.program_counter.pc))
 
+        # update instruction step
+        instructions_label.config(
+            text="next state : " + program[simulator.program_counter.pc])
+
     def load_file_button_click():
         nonlocal program, memory, simulator
         file_path = filedialog.askopenfilename(
@@ -785,6 +797,14 @@ def main():
             for i in range(0, len(memory)):
                 memory_text.insert(tk.END, keys[i] + " " + str(
                     simulator.memory.read(i)) + "\n")
+
+            # update stack
+            stack_text.insert(
+                tk.END, [s for s in simulator.alu.stack.stack if s != None])
+
+            # update instruction step
+        instructions_label.config(
+            text="next state : " + program[simulator.program_counter.pc] if simulator.program_counter.pc < len(program) else "Program terminated")
 
     # run every instruction
 
@@ -840,14 +860,18 @@ def main():
         # update program counter label
         count.config(text="step " + str(simulator.program_counter.pc))
 
+        # update instruction step
+        instructions_label.config(
+            text="next state : " + program[simulator.program_counter.pc] if simulator.program_counter.pc < len(program) else "Program terminated")
+
         pass
 
     step_button = ttk.Button(root, text="Step", command=on_step_click)
-    step_button.grid(row=2, column=0, pady=10)
+    step_button.grid(row=3, column=0, pady=10)
 
     load_button = tk.Button(root, text="Load File",
                             command=load_file_button_click)
-    load_button.grid(row=3, column=0, padx=10, pady=10)
+    load_button.grid(row=4, column=0, padx=10, pady=10)
     # reverse_step_button = ttk.Button(
     #     root, text="Reverse Step", command=on_reverse_step_click)
     # reverse_step_button.grid(row=2, column=1, pady=10)
