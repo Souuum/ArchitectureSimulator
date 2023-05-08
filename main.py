@@ -1,4 +1,8 @@
 import re
+import tkinter as tk
+from tkinter import filedialog
+from tkinter import ttk
+import copy
 
 
 class Register:
@@ -16,10 +20,15 @@ class Memory:
     def write(self, address, value):
         self.mem[address] = value
 
+    def copy(self):
+        new_memory = Memory(len(self.mem))
+        new_memory.mem = copy.deepcopy(self.mem)
+        return new_memory
+
 
 class Stack:
     def __init__(self, size):
-        self.stack = [0] * size
+        self.stack = [None] * size
         self.sp = 0
 
     def push(self, value):
@@ -28,6 +37,7 @@ class Stack:
 
     def pop(self):
         self.sp -= 1
+        self.stack.pop(self.sp)
         return self.stack[self.sp]
 
 
@@ -483,7 +493,7 @@ class ALU:
 
         if re.match(r'T\d+', reg):
             reg = int(reg[1:])
-            self.registers[reg].value = self.registers[reg].value >> int(const)
+            self.registers[reg].value = self.registers[reg].value << int(const)
 
     # b. SRR <reg> <const>
     # This operation takes the value in reg and performs a logical shift right of the number of bits defined
@@ -493,7 +503,7 @@ class ALU:
 
         if re.match(r'T\d+', reg):
             reg = int(reg[1:])
-            self.registers[reg].value = self.registers[reg].value << int(const)
+            self.registers[reg].value = self.registers[reg].value >> int(const)
 
 
 class Simulator:
@@ -534,65 +544,261 @@ class Simulator:
             elif state == "code":
                 program.append(line)
 
-        print(program)
-        print(memory)
-
         # Initialize memory with the loaded variable values
         for var, value in memory.items():
-            print(value)
             self.memory.write(value['indice'], value['value'])
 
         print("program loaded")
 
         return program, memory
 
-    def execute_program(self, filename):
-        program, memory = self.load_program(filename)
-        self.program_counter.pc = 0
+    def execute_program(self, program, memory):
+        self.program_counter.pc = self.program_counter.pc
 
-        while self.program_counter.pc < len(program):
-            instruction = program[self.program_counter.pc]
-            tokens = re.split(r'\s+', instruction)
+        instruction = program[self.program_counter.pc]
+        tokens = re.split(r'\s+', instruction)
 
-            operation = tokens[0]
+        operation = tokens[0]
 
-            for i in range(1, len(tokens)):
-                # check if a token is a register
+        for i in range(1, len(tokens)):
+            print("token: ", tokens[i])
+            # check if a token is a register
 
-                if re.match(r'T\d+', tokens[i]):
-                    print("found token")
-                # else if a token is a variable (start with a letter)
-                elif re.match(r'[a-zA-Z]+', tokens[i]):
-                    tokens[i] = str(memory[tokens[i]]['indice'])
-                # else if a token is a constant (start with a number)
+            if re.match(r'T\d+', tokens[i]):
+                print("found register")
+            # else if a token is a variable (start with a letter)
+            elif re.match(r'[a-zA-Z]+', tokens[i]):
+                print("found variable")
+                # check if it is A+n or A-n
+                if re.match(r'[a-zA-Z]+\+\d+', tokens[i]):
+                    print("found indirect addressing")
+                    var, value = re.split(r'\+', tokens[i])
+                    tokens[i] = str(memory[var]['indice'] + int(value))
+                elif re.match(r'[a-zA-Z]+\-\d+', tokens[i]):
+                    print("found indirect addressing")
+                    var, value = re.split(r'\-', tokens[i])
+                    tokens[i] = str(memory[var]['indice'] - int(value))
+
                 else:
-                    tokens[i] = int(tokens[i])
-
-            print(tokens[1:])
-
-            # look if operations are in the list of operations in ALU and execute the corresponding function
-            if operation in self.alu.operations.keys():
-                self.alu.operations[operation](
-                    *tokens[1:])
+                    tokens[i] = str(memory[tokens[i]]['indice'])
+            # else if a token is a constant (start with a number)
             else:
-                print("Error: Operation not found")
+                print("found constant")
+                tokens[i] = int(tokens[i])
 
-            print('register')
-            for r in self.registers:
-                print(r.value)
+        print(tokens[1:])
 
-            print('memory')
-            for i in range(0, 3):
-                print(self.memory.read(i))
+        # look if operations are in the list of operations in ALU and execute the corresponding function
+        if operation in self.alu.operations.keys():
+            self.alu.operations[operation](
+                *tokens[1:])
+        else:
+            print("Error: Operation not found")
 
-            # Handle instructions ...
-            self.program_counter.next()
+        print('register')
+        for r in self.registers:
+            print(r.value)
+
+        print('memory')
+        for i in range(0, 3):
+            print(self.memory.read(i))
+
+        # Handle instructions ...
+        self.program_counter.next()
+
+        # update memory variable
+        for var, value in memory.items():
+            memory[var]['value'] = self.memory.read(value['indice'])
+
+        return memory
 
 
 def main():
+
     simulator = Simulator()
-    simulator.execute_program("test.asm")
+    root = tk.Tk()
+    root.title("Assembly Simulator")
+
+    # Add this button to the interface
+
+    program, memory, previous_states = [], [], []
+
+    instructions_frame = ttk.LabelFrame(root, text="Instructions")
+    instructions_frame.grid(row=0, column=0, padx=10, pady=10)
+
+    memory_frame = ttk.LabelFrame(root, text="Memory")
+    memory_frame.grid(row=1, column=0, padx=10, pady=10)
+
+    registers_frame = ttk.LabelFrame(root, text="Registers")
+    registers_frame.grid(row=0, column=1, padx=10, pady=10)
+
+    stack_frame = ttk.LabelFrame(root, text="Stack")
+    stack_frame.grid(row=1, column=1, padx=10, pady=10)
+
+    instructions_text = tk.Text(
+        instructions_frame, wrap=tk.WORD, height=10, width=30)
+    instructions_text.pack(padx=10, pady=10)
+    for i in program:
+        instructions_text.insert(tk.END, i + "\n")
+
+    memory_text = tk.Text(memory_frame, wrap=tk.WORD, height=10, width=30)
+    memory_text.pack(padx=10, pady=10)
+
+    registers_text = tk.Text(
+        registers_frame, wrap=tk.WORD, height=10, width=30)
+    registers_text.pack(padx=10, pady=10)
+    registers_text.insert(tk.END, [s.value for s in simulator.alu.registers])
+
+    stack_text = tk.Text(
+        stack_frame, wrap=tk.WORD, height=10, width=30)
+    stack_text.pack(padx=10, pady=10)
+    stack_text.insert(
+        tk.END, [s for s in simulator.alu.stack.stack if s != None])
+
+    def on_step_click():
+
+        if simulator.program_counter.pc == len(program):
+            print("Program terminated")
+            return
+
+        nonlocal memory, previous_states
+
+        # saving current states
+        current_state = {
+            'program': list(program),
+            'mem': copy.deepcopy(memory),
+            'sim_mem': copy.deepcopy(simulator.memory),
+            'registers': [r.value for r in simulator.registers],
+        }
+
+        previous_states.append(current_state)
+
+        # Handle instructions ...
+
+        memory = simulator.execute_program(program, memory)
+
+        # Clear the existing content of the Text widgets
+        instructions_text.delete('1.0', tk.END)
+        memory_text.delete('1.0', tk.END)
+        registers_text.delete('1.0', tk.END)
+
+        # Update the Text widgets with the new content
+        keys = list(memory.keys())
+        # update instructions
+        for i in program:
+            instructions_text.insert(tk.END, i + "\n")
+
+        # update registers
+        for i in range(0, len(simulator.registers)):
+            registers_text.insert(tk.END, "T" + str(i) + " " + str(
+                simulator.registers[i].value) + "\n")
+
+        # update memory
+        for i in range(0, len(keys)):
+            memory_text.insert(tk.END, keys[i] + " " + str(
+                memory[keys[i]]['value']) + "\n")
+
+        # update stack
+        stack_text.delete('1.0', tk.END)
+        stack_text.insert(
+            tk.END, [s for s in simulator.alu.stack.stack if s != None])
+
+        # update program counter label
+        count.config(text="step " + str(simulator.program_counter.pc))
+
+        pass
+
+    def on_reverse_step_click():
+        nonlocal memory, previous_states, simulator, program
+
+        if simulator.program_counter.pc == 0:
+            return
+        if not previous_states:
+            return
+
+        last_state = previous_states.pop()
+        program[:] = last_state['program']
+        simulator.memory = last_state['sim_mem']
+        for i, register_value in enumerate(last_state['registers']):
+            simulator.registers[i].value = register_value
+
+        # Clear the existing content of the Text widgets
+        instructions_text.delete('1.0', tk.END)
+        memory_text.delete('1.0', tk.END)
+        registers_text.delete('1.0', tk.END)
+
+        simulator.program_counter.pc = simulator.program_counter.pc - 1
+
+        # Update the Text widgets with the new content
+        # update instructions
+        for i in program:
+            instructions_text.insert(tk.END, i + "\n")
+
+        # update registers
+        for i in range(0, len(simulator.registers)):
+            registers_text.insert(tk.END, "T" + str(i) + " " + str(
+                simulator.registers[i].value) + "\n")
+
+        keys = list(memory.keys())
+
+        # update memory
+        for i in range(0, len(keys)):
+            memory_text.insert(tk.END, keys[i] + " " + str(
+                last_state['mem'][keys[i]]['value']) + "\n")
+
+        # update stack
+        stack_text.delete('1.0', tk.END)
+        stack_text.insert(
+            tk.END, [s for s in simulator.alu.stack.stack if s != None])
+
+        # update program counter label
+        count.config(text="step " + str(simulator.program_counter.pc))
+
+    def load_file_button_click():
+        nonlocal program, memory
+        file_path = filedialog.askopenfilename(
+            filetypes=[("Assembly files", "*.asm"), ("All files", "*.*")])
+
+        if file_path:
+            program, memory = simulator.load_program(file_path)
+
+            # Clear the existing content of the Text widgets
+            instructions_text.delete('1.0', tk.END)
+            memory_text.delete('1.0', tk.END)
+            registers_text.delete('1.0', tk.END)
+
+            # Update the Text widgets with the new content
+            keys = list(memory.keys())
+            # update instructions
+            for i in program:
+                instructions_text.insert(tk.END, i + "\n")
+
+            # update registers
+            for i in range(0, len(simulator.registers)):
+                registers_text.insert(tk.END, "T" + str(i) + " " + str(
+                    simulator.registers[i].value) + "\n")
+
+            # update memory
+            for i in range(0, len(memory)):
+                memory_text.insert(tk.END, keys[i] + " " + str(
+                    simulator.memory.read(i)) + "\n")
+
+    step_button = ttk.Button(root, text="Step", command=on_step_click)
+    step_button.grid(row=2, column=0, pady=10)
+
+    load_button = tk.Button(root, text="Load File",
+                            command=load_file_button_click)
+    load_button.grid(row=3, column=0, padx=10, pady=10)
+    reverse_step_button = ttk.Button(
+        root, text="Reverse Step", command=on_reverse_step_click)
+    reverse_step_button.grid(row=2, column=1, pady=10)
+
+    count = ttk.Label(root, text="step 0")
+    count.grid(row=3, column=1, pady=10)
+
+    root.mainloop()
 
 
 if __name__ == "__main__":
+
     main()
