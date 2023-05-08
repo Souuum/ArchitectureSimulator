@@ -755,17 +755,20 @@ def main():
         count.config(text="step " + str(simulator.program_counter.pc))
 
     def load_file_button_click():
-        nonlocal program, memory
+        nonlocal program, memory, simulator
         file_path = filedialog.askopenfilename(
             filetypes=[("Assembly files", "*.asm"), ("All files", "*.*")])
 
         if file_path:
+            simulator = Simulator()
             program, memory = simulator.load_program(file_path)
 
             # Clear the existing content of the Text widgets
             instructions_text.delete('1.0', tk.END)
             memory_text.delete('1.0', tk.END)
             registers_text.delete('1.0', tk.END)
+            stack_text.delete('1.0', tk.END)
+            count.config(text="step " + str(simulator.program_counter.pc))
 
             # Update the Text widgets with the new content
             keys = list(memory.keys())
@@ -783,15 +786,74 @@ def main():
                 memory_text.insert(tk.END, keys[i] + " " + str(
                     simulator.memory.read(i)) + "\n")
 
+    # run every instruction
+
+    def on_run_click():
+
+        if simulator.program_counter.pc == len(program):
+            print("Program terminated")
+            return
+
+        nonlocal memory, previous_states
+
+        # saving current states
+        current_state = {
+            'program': list(program),
+            'mem': copy.deepcopy(memory),
+            'sim_mem': copy.deepcopy(simulator.memory),
+            'registers': [r.value for r in simulator.registers],
+        }
+
+        previous_states.append(current_state)
+
+        # Handle instructions ...
+
+        while simulator.program_counter.pc != len(program):
+            memory = simulator.execute_program(program, memory)
+
+        # Clear the existing content of the Text widgets
+        instructions_text.delete('1.0', tk.END)
+        memory_text.delete('1.0', tk.END)
+        registers_text.delete('1.0', tk.END)
+
+        # Update the Text widgets with the new content
+        keys = list(memory.keys())
+        # update instructions
+        for i in program:
+            instructions_text.insert(tk.END, i + "\n")
+
+        # update registers
+        for i in range(0, len(simulator.registers)):
+            registers_text.insert(tk.END, "T" + str(i) + " " + str(
+                simulator.registers[i].value) + "\n")
+
+        # update memory
+        for i in range(0, len(keys)):
+            memory_text.insert(tk.END, keys[i] + " " + str(
+                memory[keys[i]]['value']) + "\n")
+
+        # update stack
+        stack_text.delete('1.0', tk.END)
+        stack_text.insert(
+            tk.END, [s for s in simulator.alu.stack.stack if s != None])
+
+        # update program counter label
+        count.config(text="step " + str(simulator.program_counter.pc))
+
+        pass
+
     step_button = ttk.Button(root, text="Step", command=on_step_click)
     step_button.grid(row=2, column=0, pady=10)
 
     load_button = tk.Button(root, text="Load File",
                             command=load_file_button_click)
     load_button.grid(row=3, column=0, padx=10, pady=10)
-    reverse_step_button = ttk.Button(
-        root, text="Reverse Step", command=on_reverse_step_click)
-    reverse_step_button.grid(row=2, column=1, pady=10)
+    # reverse_step_button = ttk.Button(
+    #     root, text="Reverse Step", command=on_reverse_step_click)
+    # reverse_step_button.grid(row=2, column=1, pady=10)
+
+    run_button = ttk.Button(root, text="Run", command=on_run_click)
+    run_button.grid(row=2, column=1, pady=10)
 
     count = ttk.Label(root, text="step 0")
     count.grid(row=3, column=1, pady=10)
