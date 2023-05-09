@@ -93,7 +93,7 @@ class ALU:
     def lda(self, reg1, reg2):
 
         # check if reg1 and reg2 are registers (T0ˆ9)
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
@@ -102,7 +102,8 @@ class ALU:
             self.registers[reg1].value = self.registers[reg2].value
 
         # if reg2 is a variable => number as string
-        elif re.match(r'\d+', str(reg2)):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.memory.read(int(reg2))
         # if reg2 is a constant
         else:
@@ -153,16 +154,17 @@ class ALU:
 
     def and_(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg1].value & self.registers[reg2].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.registers[reg1].value & self.memory.read(
                 int(reg2))
 
@@ -178,16 +180,17 @@ class ALU:
 
     def or_(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg1].value | self.registers[reg2].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.registers[reg1].value | self.memory.read(
                 reg2)
 
@@ -212,17 +215,18 @@ class ALU:
 
     def add(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg1].value + \
                 self.registers[reg2].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.registers[reg1].value + \
                 self.memory.read(reg2)
         # if reg2 is a constant
@@ -237,17 +241,18 @@ class ALU:
 
     def sub(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg2].value - \
                 self.registers[reg1].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.memory.read(reg2) - \
                 self.registers[reg1].value
 
@@ -264,17 +269,18 @@ class ALU:
 
     def div(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg2].value / \
                 self.registers[reg1].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.memory.read(reg2) / \
                 self.registers[reg1].value
 
@@ -290,17 +296,18 @@ class ALU:
 
     def mul(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg2].value * \
                 self.registers[reg1].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             self.registers[reg1].value = self.memory.read(reg2) * \
                 self.registers[reg1].value
 
@@ -317,17 +324,17 @@ class ALU:
 
     def mod(self, reg1, reg2):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
 
         # if reg2 is a register
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             self.registers[reg1].value = self.registers[reg2].value % \
                 self.registers[reg1].value
 
         # if reg2 is a variable
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
             self.registers[reg1].value = self.memory.read(reg2) % \
                 self.registers[reg1].value
 
@@ -361,28 +368,30 @@ class ALU:
     # Any combination is permitted. If they are equal, jump to the address defined by the label LABEL
 
     def beq(self, reg1, reg2, label):
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        elif re.match(r'\d+', reg1):
+        elif type(reg1) == str and re.match(r'\d+', reg1):
+
             val1 = self.memory.read(reg1)
 
         else:
             val1 = int(reg1)
 
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
 
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             val2 = self.memory.read(reg2)
 
         else:
             val2 = int(reg2)
 
         if val1 == val2:
-            self.program_counter.value = label
+            self.program_counter.pc = label
 
     # 16. BNE <reg1>/<var1>/<const1> <reg2>/<var2>/<const2> <LABEL>
     # Performs a comparison between two values, given by registers, variables or constants.
@@ -390,28 +399,30 @@ class ALU:
 
     def bne(self, reg1, reg2, label):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        elif re.match(r'\d+', reg1):
+        elif type(reg1) == str and re.match(r'\d+', reg1):
+
             val1 = self.memory.read(reg1)
 
         else:
             val1 = int(reg1)
 
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
 
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             val2 = self.memory.read(reg2)
 
         else:
             val2 = int(reg2)
 
         if val1 != val2:
-            self.program_counter.value = label
+            self.program_counter.pc = label
 
     # 17. BBG <reg1>/<var1>/<const1> <reg2>/<var2>/<const2> <LABEL>
     # Performs a comparison between two values, given by registers, variables or constants.
@@ -420,28 +431,30 @@ class ALU:
 
     def bbg(self, reg1, reg2, label):
 
-        if re.match(r'T\d+', reg1):
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        elif re.match(r'\d+', reg1):
+        elif type(reg1) == str and re.match(r'\d+', reg1):
+
             val1 = self.memory.read(reg1)
 
         else:
             val1 = int(reg1)
 
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
 
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
+
             val2 = self.memory.read(reg2)
 
         else:
             val2 = int(reg2)
 
         if val1 > val2:
-            self.program_counter.value = label
+            self.program_counter.pc = label
 
     # 18. BSM <reg1>/<var1>/<const1> <reg2>/<var2>/<const2> <LABEL>
     # Performs a comparison between two values, given by registers, variables or constants.
@@ -449,41 +462,45 @@ class ALU:
     #  jump to the address defined by the label LABEL
 
     def bsm(self, reg1, reg2, label):
-
-        if re.match(r'T\d+', reg1):
+        print('inside  bsm')
+        if re.match(r'T\d+', str(reg1)):
             reg1 = int(reg1[1:])
             val1 = self.registers[reg1].value
 
-        elif re.match(r'\d+', reg1):
+        elif type(reg1) == str and re.match(r'\d+', reg1):
+
             val1 = self.memory.read(reg1)
 
         else:
             val1 = int(reg1)
 
-        if re.match(r'T\d+', reg2):
+        if re.match(r'T\d+', str(reg2)):
             reg2 = int(reg2[1:])
             val2 = self.registers[reg2].value
 
-        elif re.match(r'\d+', reg2):
+        elif type(reg2) == str and re.match(r'\d+', reg2):
             val2 = self.memory.read(reg2)
 
         else:
             val2 = int(reg2)
 
+        print(val1, val2)
+
         if val1 < val2:
-            self.program_counter.value = label
+            print("Bsm")
+            self.program_counter.pc = label
 
     # 19. JMP <LABEL>
     # Jump to the address defined by the label LABEL
 
     def jmp(self, label):
-        self.program_counter.value = label
+        self.program_counter.pc = label
 
     # 20. HLT
     # End the program execution.
 
     def hlt(self):
-        self.program_counter.value = -1
+        self.program_counter.pc = -1
 
     # Part 2
 
@@ -524,6 +541,7 @@ class Simulator:
         state = "start"
         program = []
         memory = {}
+        labels = {}
 
         i = 0
         for line in lines:
@@ -539,11 +557,25 @@ class Simulator:
                 state = "code"
                 continue
 
+            if line.startswith("HLT"):
+                state = "end"
+                continue
+
             if state == "data":
                 variable, value = re.split(r'\s+', line)
                 memory[variable] = {'value': int(value), 'indice': i}
                 i += 1
             elif state == "code":
+                # Check if the line contains a label
+                label_match = re.match(r'(\w+):', line)
+                if label_match:
+                    print('found label')
+                    label = label_match.group(1)
+                    # Store the label and its location
+                    labels[label] = len(program)
+                    # Remove the label from the line
+                    line = line.replace(label + ":", "").strip()
+
                 program.append(line)
 
         # Initialize memory with the loaded variable values
@@ -552,26 +584,38 @@ class Simulator:
 
         print("program loaded")
 
-        return program, memory
+        return program, memory, labels
 
-    def execute_program(self, program, memory):
+    def execute_program(self, program, memory, labels):
         self.program_counter.pc = self.program_counter.pc
 
         instruction = program[self.program_counter.pc]
         tokens = re.split(r'\s+', instruction)
 
+        if tokens[0] == "HLT":
+            return
+
         operation = tokens[0]
+        print('labels: ', labels)
 
         for i in range(1, len(tokens)):
             print("token: ", tokens[i])
-            # check if a token is a register
 
-            if re.match(r'T\d+', tokens[i]):
+            # Check if a token is a label
+            if tokens[i] in labels:
+                print("found label")
+                tokens[i] = labels[tokens[i]]
+                print("label index: ", tokens[i])
+
+            # Check if a token is a register
+            elif re.match(r'T\d+', tokens[i]):
                 print("found register")
-            # else if a token is a variable (start with a letter)
+
+            # Check if a token is a variable (start with a letter)
             elif re.match(r'[a-zA-Z]+', tokens[i]):
                 print("found variable")
-                # check if it is A+n or A-n
+
+                # Check if it is A+n or A-n (indirect addressing)
                 if re.match(r'[a-zA-Z]+\+\d+', tokens[i]):
                     print("found indirect addressing")
                     var, value = re.split(r'\+', tokens[i])
@@ -583,14 +627,15 @@ class Simulator:
 
                 else:
                     tokens[i] = str(memory[tokens[i]]['indice'])
-            # else if a token is a constant (start with a number)
+
+            # Check if a token is a constant (start with a number)
             else:
                 print("found constant")
                 tokens[i] = int(tokens[i])
 
         print(tokens[1:])
 
-        # look if operations are in the list of operations in ALU and execute the corresponding function
+        # Look if operations are in the list of operations in ALU and execute the corresponding function
         if operation in self.alu.operations.keys():
             self.alu.operations[operation](
                 *tokens[1:])
@@ -608,7 +653,7 @@ class Simulator:
         # Handle instructions ...
         self.program_counter.next()
 
-        # update memory variable
+        # Update memory variable
         for var, value in memory.items():
             memory[var]['value'] = self.memory.read(value['indice'])
 
@@ -624,6 +669,7 @@ def main():
     # Add this button to the interface
 
     program, memory, previous_states = [], [], []
+    labels = {}
 
     instructions_frame = ttk.LabelFrame(root, text="Instructions")
     instructions_label = ttk.Label(root, text="next state : None")
@@ -665,7 +711,7 @@ def main():
             print("Program terminated")
             return
 
-        nonlocal memory, previous_states
+        nonlocal memory, previous_states, labels
 
         # saving current states
         current_state = {
@@ -679,7 +725,7 @@ def main():
 
         # Handle instructions ...
 
-        memory = simulator.execute_program(program, memory)
+        memory = simulator.execute_program(program, memory, labels)
 
         # Clear the existing content of the Text widgets
         instructions_text.delete('1.0', tk.END)
@@ -767,13 +813,13 @@ def main():
             text="next state : " + program[simulator.program_counter.pc])
 
     def load_file_button_click():
-        nonlocal program, memory, simulator
+        nonlocal program, memory, labels, simulator
         file_path = filedialog.askopenfilename(
             filetypes=[("Assembly files", "*.asm"), ("All files", "*.*")])
 
         if file_path:
             simulator = Simulator()
-            program, memory = simulator.load_program(file_path)
+            program, memory, labels = simulator.load_program(file_path)
 
             # Clear the existing content of the Text widgets
             instructions_text.delete('1.0', tk.END)
@@ -829,7 +875,7 @@ def main():
         # Handle instructions ...
 
         while simulator.program_counter.pc != len(program):
-            memory = simulator.execute_program(program, memory)
+            memory = simulator.execute_program(program, memory, labels)
 
         # Clear the existing content of the Text widgets
         instructions_text.delete('1.0', tk.END)
